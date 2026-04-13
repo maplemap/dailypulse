@@ -41,7 +41,7 @@ A Telegram bot for daily tracking of physical and mental well-being. Sends remin
 ### 1. Clone and configure
 
 ```bash
-git clone <repo>
+git clone git@github.com:maplemap/dailypulse.git
 cd dailypulse
 cp .env.example .env
 ```
