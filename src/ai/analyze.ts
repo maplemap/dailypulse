@@ -37,7 +37,7 @@ export async function generateAnalysis(
   );
 
   const stream = client.messages.stream({
-    model: 'claude-opus-4-6',
+    model: 'claude-sonnet-4-5',
     max_tokens: 2048,
     system: [
       {
