@@ -11,4 +11,5 @@ export const config = {
   databaseUrl: requireEnv('DATABASE_URL'),
   anthropicApiKey: requireEnv('ANTHROPIC_API_KEY'),
   telegramChatId: requireEnv('TELEGRAM_CHAT_ID'),
+  timezone: process.env.TIMEZONE ?? 'Europe/Kyiv',
 };
