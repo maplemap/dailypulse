@@ -45,6 +45,7 @@ export async function generateAnalysis(
   entries: Entry[],
   period: 'week' | 'month',
   mode: 'brief' | 'detailed' = 'brief',
+  signal?: AbortSignal,
 ): Promise<string> {
   const periodLabel = period === 'week' ? 'тиждень' : 'місяць';
   const modePrompt = mode === 'brief' ? BRIEF_PROMPT : DETAILED_PROMPT;
@@ -66,7 +67,7 @@ export async function generateAnalysis(
         content: `Ось мої записи за ${periodLabel}:\n\n${formatEntries(entries)}\n\n${modePrompt}`,
       },
     ],
-  });
+  }, { signal });
 
   const message = await stream.finalMessage();
 

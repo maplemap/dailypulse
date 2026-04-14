@@ -10,7 +10,18 @@ export const mainKeyboard = new Keyboard()
   .resized()
   .persistent();
 
-async function handleAnalyze(ctx: Context) {
+const cancelKeyboard = new InlineKeyboard().text('❌ Скасувати', 'cancel_analysis');
+
+const pendingAnalysis = new Map<number, AbortController>();
+
+async function runAnalysis(ctx: Context, mode: 'brief' | 'detailed') {
+  const chatId = ctx.chat!.id;
+
+  if (pendingAnalysis.has(chatId)) {
+    await ctx.reply('Аналіз вже виконується.');
+    return;
+  }
+
   const now = new Date();
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const entries = await getEntriesByPeriod(weekAgo, now);
@@ -20,24 +31,30 @@ async function handleAnalyze(ctx: Context) {
     return;
   }
 
-  await ctx.reply('Аналізую...');
-  const analysis = await generateAnalysis(entries, 'week', 'brief');
-  await ctx.reply(analysis, { parse_mode: 'Markdown' });
-}
+  const label = mode === 'brief' ? '🔍 Аналізую...' : '📋 Готую детальний звіт...';
+  const msg = await ctx.reply(label, { reply_markup: cancelKeyboard });
 
-async function handleReport(ctx: Context) {
-  const now = new Date();
-  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const entries = await getEntriesByPeriod(weekAgo, now);
+  const controller = new AbortController();
+  pendingAnalysis.set(chatId, controller);
 
-  if (entries.length === 0) {
-    await ctx.reply('Немає записів за останній тиждень.');
-    return;
+  const typingInterval = setInterval(() => {
+    ctx.api.sendChatAction(chatId.toString(), 'typing').catch(() => {});
+  }, 4000);
+
+  await ctx.api.sendChatAction(chatId.toString(), 'typing');
+
+  try {
+    const analysis = await generateAnalysis(entries, 'week', mode, controller.signal);
+    await ctx.api.editMessageText(chatId, msg.message_id, analysis, {
+      parse_mode: 'Markdown',
+    });
+  } catch {
+    const text = controller.signal.aborted ? '❌ Аналіз скасовано.' : '⚠️ Не вдалося отримати аналіз.';
+    await ctx.api.editMessageText(chatId, msg.message_id, text).catch(() => {});
+  } finally {
+    clearInterval(typingInterval);
+    pendingAnalysis.delete(chatId);
   }
-
-  await ctx.reply('Готую детальний звіт... це може зайняти кілька секунд.');
-  const analysis = await generateAnalysis(entries, 'week', 'detailed');
-  await ctx.reply(analysis, { parse_mode: 'Markdown' });
 }
 
 async function handleStats(ctx: Context) {
@@ -70,14 +87,20 @@ export function registerCommands(bot: Bot<BotContext>) {
   });
 
   bot.command('fill', (ctx) => ctx.conversation.enter('fill'));
-  bot.command('analyze', handleAnalyze);
-  bot.command('report', handleReport);
+  bot.command('analyze', (ctx) => runAnalysis(ctx, 'brief'));
+  bot.command('report', (ctx) => runAnalysis(ctx, 'detailed'));
   bot.command('stats', handleStats);
 
   bot.hears('✏️ Заповнити', (ctx) => ctx.conversation.enter('fill'));
-  bot.hears('🔍 Аналіз', handleAnalyze);
-  bot.hears('📋 Детальний звіт', handleReport);
+  bot.hears('🔍 Аналіз', (ctx) => runAnalysis(ctx, 'brief'));
+  bot.hears('📋 Детальний звіт', (ctx) => runAnalysis(ctx, 'detailed'));
   bot.hears('📊 Статистика', handleStats);
+
+  bot.callbackQuery('cancel_analysis', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const chatId = ctx.chat!.id;
+    pendingAnalysis.get(chatId)?.abort();
+  });
 
   // Handle "Fill in" button from reminders
   bot.callbackQuery('reminder_fill', async (ctx) => {
