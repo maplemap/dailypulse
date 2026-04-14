@@ -27,10 +27,18 @@ async function askScore(
 ): Promise<number> {
   await ctx.reply(question, { reply_markup: buildScoreKeyboard() });
 
-  const callbackCtx = await conversation.waitFor('callback_query:data');
-  const data = callbackCtx.callbackQuery.data;
-  await callbackCtx.answerCallbackQuery();
+  const callbackCtx = await conversation.waitFor('callback_query:data', {
+    otherwise: (ctx) => ctx.answerCallbackQuery(),
+  });
 
+  const data = callbackCtx.callbackQuery.data;
+
+  if (!data.startsWith('score_')) {
+    await callbackCtx.answerCallbackQuery();
+    return askScore(conversation, ctx, question);
+  }
+
+  await callbackCtx.answerCallbackQuery();
   const score = parseInt(data.replace('score_', ''), 10);
   await callbackCtx.editMessageReplyMarkup();
   return score;
