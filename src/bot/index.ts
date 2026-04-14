@@ -17,6 +17,11 @@ export function createBot() {
   bot.use(conversations<BotContext, BotContext>());
   bot.use(createConversation<BotContext, BotContext>(fillFlow, 'fill'));
 
+  bot.use(async (ctx, next) => {
+    if (ctx.chat?.id.toString() !== config.telegramChatId) return;
+    await next();
+  });
+
   registerCommands(bot);
 
   bot.on('message', async (ctx) => {
