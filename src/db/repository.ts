@@ -24,7 +24,6 @@ export async function getStats(from: Date, to: Date) {
       avgEnergy: avg(entries.energy),
       avgMood: avg(entries.mood),
       avgAnxiety: avg(entries.anxiety),
-      avgActivity: avg(entries.activity),
     })
     .from(entries)
     .where(and(gte(entries.recordedAt, from), lte(entries.recordedAt, to)));

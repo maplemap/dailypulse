@@ -63,12 +63,6 @@ export async function fillFlow(
     ctx,
     '😰 *Тривожність* — наскільки ти тривожишся або відчуваєш стрес? (1–10)',
   );
-  const activity = await askScore(
-    conversation,
-    ctx,
-    '🏃 *Фізична активність* — наскільки ти був фізично активним сьогодні? (1–10)',
-  );
-
   await ctx.reply('📝 Хочеш додати коментар? Напиши текст або /skip');
 
   const commentCtx = await conversation.waitFor('message:text');
@@ -82,7 +76,6 @@ export async function fillFlow(
     energy,
     mood,
     anxiety,
-    activity,
     comment,
   });
 

@@ -50,8 +50,7 @@ export function registerCommands(bot: Bot<BotContext>) {
       `📊 *Статистика за тиждень*\n\n` +
         `⚡ Енергія: ${fmt(stats.avgEnergy)}/10\n` +
         `😊 Настрій: ${fmt(stats.avgMood)}/10\n` +
-        `😰 Тривожність: ${fmt(stats.avgAnxiety)}/10\n` +
-        `🏃 Активність: ${fmt(stats.avgActivity)}/10`,
+        `😰 Тривожність: ${fmt(stats.avgAnxiety)}/10`,
       { parse_mode: 'Markdown' },
     );
   });

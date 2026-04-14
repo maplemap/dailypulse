@@ -16,7 +16,6 @@ export const entries = pgTable('entries', {
   energy: smallint('energy').notNull(),
   mood: smallint('mood').notNull(),
   anxiety: smallint('anxiety').notNull(),
-  activity: smallint('activity').notNull(),
   comment: text('comment'),
 });
 
