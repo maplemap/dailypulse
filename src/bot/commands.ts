@@ -10,7 +10,8 @@ export function registerCommands(bot: Bot<BotContext>) {
       `Привіт! Я буду нагадувати тобі тричі на день описати свій стан.\n\n` +
         `Команди:\n` +
         `/fill — заповнити запис зараз\n` +
-        `/analyze — AI-аналіз за тиждень\n` +
+        `/analyze — стислий AI-аналіз за тиждень\n` +
+        `/report — детальний AI-звіт за тиждень\n` +
         `/stats — коротка статистика`,
     );
   });
@@ -29,8 +30,23 @@ export function registerCommands(bot: Bot<BotContext>) {
       return;
     }
 
-    await ctx.reply('Аналізую... це може зайняти кілька секунд.');
-    const analysis = await generateAnalysis(entries, 'week');
+    await ctx.reply('Аналізую...');
+    const analysis = await generateAnalysis(entries, 'week', 'brief');
+    await ctx.reply(analysis, { parse_mode: 'Markdown' });
+  });
+
+  bot.command('report', async (ctx) => {
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const entries = await getEntriesByPeriod(weekAgo, now);
+
+    if (entries.length === 0) {
+      await ctx.reply('Немає записів за останній тиждень.');
+      return;
+    }
+
+    await ctx.reply('Готую детальний звіт... це може зайняти кілька секунд.');
+    const analysis = await generateAnalysis(entries, 'week', 'detailed');
     await ctx.reply(analysis, { parse_mode: 'Markdown' });
   });
 
