@@ -2,7 +2,7 @@ import { Bot, session } from 'grammy';
 import { conversations, createConversation } from '@grammyjs/conversations';
 import { config } from '../config.js';
 import { friendlyError } from './errors.js';
-import { registerCommands } from './commands.js';
+import { registerCommands, mainKeyboard } from './commands.js';
 import { fillFlow } from './flow.js';
 import type { BotContext, SessionData } from './types.js';
 
@@ -18,6 +18,10 @@ export function createBot() {
   bot.use(createConversation<BotContext, BotContext>(fillFlow, 'fill'));
 
   registerCommands(bot);
+
+  bot.on('message', async (ctx) => {
+    await ctx.reply('Обери дію:', { reply_markup: mainKeyboard });
+  });
 
   bot.catch(async (err) => {
     console.error('Bot error:', err);
