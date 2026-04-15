@@ -5,10 +5,9 @@ import { getEntriesWithValues, getStats, getEventLogsWithTypes, getEventStats } 
 import { generateAnalysis } from '../ai/analyze.js';
 
 export const mainKeyboard = new Keyboard()
-  .text('✏️ Заповнити').text('📊 Статистика').row()
+  .text('🌡️ Як я зараз').text('📊 Статистика').row()
   .text('🔍 Аналіз').text('📋 Детальний звіт').row()
-  .text('⚡ Подія').text('🤒 Симптом').row()
-  .text('⚙️ Заплановані')
+  .text('⚡ Подія').text('🤒 Симптом')
   .resized()
   .persistent();
 
@@ -118,7 +117,7 @@ export function registerCommands(bot: Bot<BotContext>) {
   bot.command('report', (ctx) => runAnalysis(ctx, 'detailed'));
   bot.command('stats', handleStats);
 
-  bot.hears('✏️ Заповнити', (ctx) => ctx.conversation.enter('fill'));
+  bot.hears('🌡️ Як я зараз', (ctx) => ctx.conversation.enter('fill'));
   bot.hears('🔍 Аналіз', (ctx) => runAnalysis(ctx, 'brief'));
   bot.hears('📋 Детальний звіт', (ctx) => runAnalysis(ctx, 'detailed'));
   bot.hears('📊 Статистика', handleStats);
