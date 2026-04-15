@@ -92,8 +92,8 @@ export async function deleteEventType(id: number): Promise<void> {
 
 // ─── Event Logs ──────────────────────────────────────────────────
 
-export async function createEventLog(eventTypeId: number, comment?: string): Promise<void> {
-  await db.insert(eventLogs).values({ eventTypeId, comment: comment ?? null });
+export async function createEventLog(eventTypeId: number): Promise<void> {
+  await db.insert(eventLogs).values({ eventTypeId });
 }
 
 export async function getEventLogsWithTypes(from: Date, to: Date) {

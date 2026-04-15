@@ -134,14 +134,7 @@ async function logFlow(
       continue;
     }
 
-    await ctx.reply('Коментар? (або /skip)');
-    const commentCtx = await conversation.waitFor('message:text', {
-      otherwise: (c) => { if (c.callbackQuery) c.answerCallbackQuery().catch(() => {}); },
-    });
-    const commentText = commentCtx.message.text.trim();
-    const comment = commentText === '/skip' ? undefined : commentText;
-
-    await conversation.external(() => createEventLog(eventTypeId, comment));
+    await conversation.external(() => createEventLog(eventTypeId));
     await ctx.reply('✅ Записано!');
     return;
   }
