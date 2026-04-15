@@ -5,14 +5,16 @@ import { getEntriesWithValues, getStats, getEventLogsWithTypes, getEventStats, g
 import { generateAnalysis } from '../ai/analyze.js';
 
 export const mainKeyboard = new Keyboard()
-  .text('🌡️ Як я зараз').text('📊 Статистика').row()
-  .text('🔍 Аналіз').text('📋 Детальний звіт').row()
-  .text('⚡ Подія').text('🤒 Симптом').row()
-  .text('📝 Нотатка')
+  .text('🌡️ Як я зараз').text('⚡ Подія').text('🤒 Симптом').text('📝 Нотатка').row()
+  .text('📊 Аналіз')
   .resized()
   .persistent();
 
 const cancelKeyboard = new InlineKeyboard().text('❌ Скасувати', 'cancel_analysis');
+
+const analysisKeyboard = new InlineKeyboard()
+  .text('🔍 Швидкий аналіз', 'analysis_brief')
+  .text('📋 Детальний аналіз', 'analysis_detailed');
 
 const pendingAnalysis = new Map<number, AbortController>();
 
@@ -72,11 +74,6 @@ async function handleStats(ctx: Context) {
     getEventStats(weekAgo, now),
   ]);
 
-  if (rows.length === 0 && eventRows.length === 0) {
-    await ctx.reply('Немає записів за останній тиждень.');
-    return;
-  }
-
   const parts: string[] = ['📊 *Статистика за тиждень*'];
 
   if (rows.length > 0) {
@@ -103,7 +100,12 @@ async function handleStats(ctx: Context) {
     );
   }
 
-  await ctx.reply(parts.join('\n\n'), { parse_mode: 'Markdown' });
+  const text = parts.length > 1 ? parts.join('\n\n') : '📊 *Статистика за тиждень*\n\nЗаписів ще немає.';
+
+  await ctx.reply(text, {
+    parse_mode: 'Markdown',
+    reply_markup: analysisKeyboard,
+  });
 }
 
 export function registerCommands(bot: Bot<BotContext>) {
@@ -121,9 +123,17 @@ export function registerCommands(bot: Bot<BotContext>) {
 
   bot.hears('🌡️ Як я зараз', (ctx) => ctx.conversation.enter('fill'));
   bot.hears('📝 Нотатка', (ctx) => ctx.conversation.enter('journal'));
-  bot.hears('🔍 Аналіз', (ctx) => runAnalysis(ctx, 'brief'));
-  bot.hears('📋 Детальний звіт', (ctx) => runAnalysis(ctx, 'detailed'));
-  bot.hears('📊 Статистика', handleStats);
+  bot.hears('📊 Аналіз', handleStats);
+
+  bot.callbackQuery('analysis_brief', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await runAnalysis(ctx, 'brief');
+  });
+
+  bot.callbackQuery('analysis_detailed', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await runAnalysis(ctx, 'detailed');
+  });
 
   bot.callbackQuery('cancel_analysis', async (ctx) => {
     await ctx.answerCallbackQuery();
