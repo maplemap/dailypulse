@@ -7,6 +7,7 @@ import {
   createItem,
   updateItem,
   archiveItem,
+  deleteItem,
 } from '../db/repository.js';
 
 const PERIOD_LABELS: Record<string, string> = {
@@ -37,6 +38,7 @@ async function buildItemsListKeyboard(showArchived = false) {
       .row()
       .text('✏️ Редагувати', `item_edit:${item.id}`)
       .text('📦 Архів', `item_archive_confirm:${item.id}`)
+      .text('🗑️ Видалити', `item_delete_confirm:${item.id}`)
       .row();
   }
 
@@ -154,7 +156,8 @@ export async function editItemFlow(
   conversation: Conversation<BotContext, BotContext>,
   ctx: BotContext,
 ) {
-  const itemId = ctx.session.editingItemId;
+  const rawData = ctx.callbackQuery?.data ?? '';
+  const itemId = parseInt(rawData.replace('item_edit:', '')) || undefined;
   if (!itemId) {
     await ctx.reply('Помилка: айтем не вибрано.');
     return;
@@ -238,7 +241,7 @@ export async function editItemFlow(
 // ─── Register handlers ────────────────────────────────────────────
 
 export function registerItemsMenu(bot: Bot<BotContext>) {
-  bot.hears('⚙️ Айтеми', async (ctx) => sendItemsMenu(ctx));
+  bot.hears('⚙️ Заплановані', async (ctx) => sendItemsMenu(ctx));
   bot.command('items', async (ctx) => sendItemsMenu(ctx));
 
   bot.callbackQuery('noop', (ctx) => ctx.answerCallbackQuery());
@@ -250,7 +253,6 @@ export function registerItemsMenu(bot: Bot<BotContext>) {
 
   bot.callbackQuery(/^item_edit:(\d+)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
-    ctx.session.editingItemId = parseInt(ctx.match[1]);
     await ctx.conversation.enter('edit_item');
   });
 
@@ -269,6 +271,30 @@ export function registerItemsMenu(bot: Bot<BotContext>) {
       `📦 Архівувати *${item.name}*?\nАйтем зникне з форми, але всі дані збережуться.`,
       { parse_mode: 'Markdown', reply_markup: confirmKeyboard },
     );
+  });
+
+  bot.callbackQuery(/^item_delete_confirm:(\d+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const id = parseInt(ctx.match[1]);
+    const all = await getAllItems();
+    const item = all.find((i) => i.id === id);
+    if (!item) return;
+
+    const confirmKeyboard = new InlineKeyboard()
+      .text('✅ Так, видалити', `item_delete:${id}`)
+      .text('❌ Скасувати', 'items_menu');
+
+    await ctx.editMessageText(
+      `🗑️ Видалити *${item.name}*?\n⚠️ Всі записи з цим айтемом також будуть видалені назавжди.`,
+      { parse_mode: 'Markdown', reply_markup: confirmKeyboard },
+    );
+  });
+
+  bot.callbackQuery(/^item_delete:(\d+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const id = parseInt(ctx.match[1]);
+    await deleteItem(id);
+    await editItemsMenu(ctx);
   });
 
   bot.callbackQuery(/^item_archive:(\d+)$/, async (ctx) => {
