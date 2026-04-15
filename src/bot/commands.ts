@@ -5,7 +5,8 @@ import { getEntriesWithValues, getStats, getEventLogsWithTypes, getEventStats, g
 import { generateAnalysis } from '../ai/analyze.js';
 
 export const mainKeyboard = new Keyboard()
-  .text('🌡️ Як я зараз').text('⚡ Подія').text('🤒 Симптом').text('📝 Нотатка').row()
+  .text('🌡️ Як я зараз').text('⚡ Подія').row()
+  .text('🤒 Симптом').text('📝 Нотатка').row()
   .text('📊 Аналіз')
   .resized()
   .persistent();
