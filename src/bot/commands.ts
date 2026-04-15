@@ -1,13 +1,14 @@
 import type { Bot, Context } from 'grammy';
 import { InlineKeyboard, Keyboard } from 'grammy';
 import type { BotContext } from './types.js';
-import { getEntriesWithValues, getStats, getEventLogsWithTypes, getEventStats } from '../db/repository.js';
+import { getEntriesWithValues, getStats, getEventLogsWithTypes, getEventStats, getJournalEntries } from '../db/repository.js';
 import { generateAnalysis } from '../ai/analyze.js';
 
 export const mainKeyboard = new Keyboard()
   .text('🌡️ Як я зараз').text('📊 Статистика').row()
   .text('🔍 Аналіз').text('📋 Детальний звіт').row()
-  .text('⚡ Подія').text('🤒 Симптом')
+  .text('⚡ Подія').text('🤒 Симптом').row()
+  .text('📝 Нотатка')
   .resized()
   .persistent();
 
@@ -25,12 +26,13 @@ async function runAnalysis(ctx: Context, mode: 'brief' | 'detailed') {
 
   const now = new Date();
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const [rows, eventRows] = await Promise.all([
+  const [rows, eventRows, journalRows] = await Promise.all([
     getEntriesWithValues(weekAgo, now),
     getEventLogsWithTypes(weekAgo, now),
+    getJournalEntries(weekAgo, now),
   ]);
 
-  if (rows.length === 0 && eventRows.length === 0) {
+  if (rows.length === 0 && eventRows.length === 0 && journalRows.length === 0) {
     await ctx.reply('Немає записів за останній тиждень.');
     return;
   }
@@ -48,7 +50,7 @@ async function runAnalysis(ctx: Context, mode: 'brief' | 'detailed') {
   await ctx.api.sendChatAction(chatId.toString(), 'typing');
 
   try {
-    const analysis = await generateAnalysis(rows, 'week', mode, controller.signal, eventRows);
+    const analysis = await generateAnalysis(rows, 'week', mode, controller.signal, eventRows, journalRows);
     await ctx.api.editMessageText(chatId, msg.message_id, analysis, {
       parse_mode: 'Markdown',
     });
@@ -118,6 +120,7 @@ export function registerCommands(bot: Bot<BotContext>) {
   bot.command('stats', handleStats);
 
   bot.hears('🌡️ Як я зараз', (ctx) => ctx.conversation.enter('fill'));
+  bot.hears('📝 Нотатка', (ctx) => ctx.conversation.enter('journal'));
   bot.hears('🔍 Аналіз', (ctx) => runAnalysis(ctx, 'brief'));
   bot.hears('📋 Детальний звіт', (ctx) => runAnalysis(ctx, 'detailed'));
   bot.hears('📊 Статистика', handleStats);

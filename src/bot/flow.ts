@@ -1,7 +1,7 @@
 import type { Conversation } from '@grammyjs/conversations';
 import { InlineKeyboard } from 'grammy';
 import type { BotContext } from './types.js';
-import { createEntry, getActiveItems } from '../db/repository.js';
+import { createEntry, createJournalEntry, getActiveItems } from '../db/repository.js';
 
 type Period = 'morning' | 'afternoon' | 'evening';
 
@@ -119,4 +119,15 @@ export async function fillFlow(
   await ctx.reply('✅ Записано! Дякую.\n\n_Змінити список показників: /items_', {
     parse_mode: 'Markdown',
   });
+}
+
+export async function journalFlow(
+  conversation: Conversation<BotContext, BotContext>,
+  ctx: BotContext,
+) {
+  await ctx.reply('📝 Напиши свою нотатку:');
+  const msgCtx = await conversation.waitFor('message:text');
+  const text = msgCtx.message.text.trim();
+  await conversation.external(() => createJournalEntry(text));
+  await ctx.reply('✅ Нотатку збережено.');
 }

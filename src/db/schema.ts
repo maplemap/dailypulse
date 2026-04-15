@@ -67,3 +67,11 @@ export const eventLogs = pgTable('event_logs', {
 export type EventType = typeof eventTypes.$inferSelect;
 export type NewEventType = typeof eventTypes.$inferInsert;
 export type EventLog = typeof eventLogs.$inferSelect;
+
+export const journalEntries = pgTable('journal_entries', {
+  id: serial('id').primaryKey(),
+  text: text('text').notNull(),
+  recordedAt: timestamp('recorded_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type JournalEntry = typeof journalEntries.$inferSelect;

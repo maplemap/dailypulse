@@ -4,7 +4,7 @@ import { config } from '../config.js';
 import { friendlyError } from './errors.js';
 import { registerCommands, mainKeyboard } from './commands.js';
 import { registerItemsMenu, addItemFlow, editItemFlow } from './items-menu.js';
-import { fillFlow } from './flow.js';
+import { fillFlow, journalFlow } from './flow.js';
 import { logEventFlow, logSymptomFlow } from './events.js';
 import type { BotContext, SessionData } from './types.js';
 
@@ -20,6 +20,7 @@ export function createBot() {
   bot.use(createConversation<BotContext, BotContext>(fillFlow, 'fill'));
   bot.use(createConversation<BotContext, BotContext>(addItemFlow, 'add_item'));
   bot.use(createConversation<BotContext, BotContext>(editItemFlow, 'edit_item'));
+  bot.use(createConversation<BotContext, BotContext>(journalFlow, 'journal'));
   bot.use(createConversation<BotContext, BotContext>(logEventFlow, 'log_event'));
   bot.use(createConversation<BotContext, BotContext>(logSymptomFlow, 'log_symptom'));
 

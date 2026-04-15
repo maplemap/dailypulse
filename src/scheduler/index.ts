@@ -3,7 +3,7 @@ import type { Bot } from 'grammy';
 import type { BotContext } from '../bot/types.js';
 import { buildReminderKeyboard } from '../bot/commands.js';
 import { config } from '../config.js';
-import { getEntriesWithValues, getEventLogsWithTypes } from '../db/repository.js';
+import { getEntriesWithValues, getEventLogsWithTypes, getJournalEntries } from '../db/repository.js';
 import { generateAnalysis } from '../ai/analyze.js';
 
 const CHAT_ID = config.telegramChatId;
@@ -36,12 +36,13 @@ export function startScheduler(bot: Bot<BotContext>) {
   cron.schedule('0 20 * * 0', async () => {
     const now = new Date();
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const [rows, eventRows] = await Promise.all([
+    const [rows, eventRows, journalRows] = await Promise.all([
       getEntriesWithValues(weekAgo, now),
       getEventLogsWithTypes(weekAgo, now),
+      getJournalEntries(weekAgo, now),
     ]);
 
-    if (rows.length === 0 && eventRows.length === 0) {
+    if (rows.length === 0 && eventRows.length === 0 && journalRows.length === 0) {
       await bot.api.sendMessage(
         CHAT_ID,
         '📊 Цього тижня немає записів для аналізу.',
@@ -50,7 +51,7 @@ export function startScheduler(bot: Bot<BotContext>) {
     }
 
     await bot.api.sendMessage(CHAT_ID, '📊 Готую тижневий AI-звіт...');
-    const analysis = await generateAnalysis(rows, 'week', 'detailed', undefined, eventRows);
+    const analysis = await generateAnalysis(rows, 'week', 'detailed', undefined, eventRows, journalRows);
     await bot.api.sendMessage(CHAT_ID, analysis, { parse_mode: 'Markdown' });
   }, { timezone: TIMEZONE });
 

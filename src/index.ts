@@ -3,6 +3,7 @@ import { createBot } from './bot/index.js';
 import { startScheduler } from './scheduler/index.js';
 import { db } from './db/index.js';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { seedDefaultItems } from './db/seed.js';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
@@ -16,6 +17,8 @@ async function main() {
     migrationsFolder: join(__dirname, 'db', 'migrations'),
   });
   console.log('Migrations applied');
+
+  await seedDefaultItems();
 
   const bot = createBot();
   startScheduler(bot);

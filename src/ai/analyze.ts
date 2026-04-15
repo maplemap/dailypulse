@@ -36,6 +36,11 @@ export type EventLogRow = {
   comment: string | null;
 };
 
+export type JournalRow = {
+  recordedAt: Date;
+  text: string;
+};
+
 function formatEventRows(rows: EventLogRow[]): string {
   return rows
     .map((r) => {
@@ -90,6 +95,7 @@ export async function generateAnalysis(
   mode: 'brief' | 'detailed' = 'brief',
   signal?: AbortSignal,
   eventRows: EventLogRow[] = [],
+  journalRows: JournalRow[] = [],
 ): Promise<string> {
   const periodLabel = period === 'week' ? 'тиждень' : 'місяць';
   const modePrompt = mode === 'brief' ? BRIEF_PROMPT : DETAILED_PROMPT;
@@ -115,6 +121,10 @@ export async function generateAnalysis(
           content: `Ось мої записи за ${periodLabel}:\n\n${formatEntries(rows)}${
             eventRows.length > 0
               ? `\n\nПодії та симптоми:\n${formatEventRows(eventRows)}`
+              : ''
+          }${
+            journalRows.length > 0
+              ? `\n\nНотатки:\n${journalRows.map((r) => `${r.recordedAt.toISOString().slice(0, 16).replace('T', ' ')}: ${r.text}`).join('\n')}`
               : ''
           }\n\n${modePrompt}`,
         },

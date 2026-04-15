@@ -6,6 +6,7 @@ import {
   trackingItems,
   eventTypes,
   eventLogs,
+  journalEntries,
   type NewTrackingItem,
   type TrackingItem,
   type EventType,
@@ -121,6 +122,20 @@ export async function getEventStats(from: Date, to: Date) {
     .where(and(gte(eventLogs.recordedAt, from), lte(eventLogs.recordedAt, to)))
     .groupBy(eventTypes.name, eventTypes.category)
     .orderBy(eventTypes.category, eventTypes.name);
+}
+
+// ─── Journal ─────────────────────────────────────────────────────
+
+export async function createJournalEntry(text: string): Promise<void> {
+  await db.insert(journalEntries).values({ text });
+}
+
+export async function getJournalEntries(from: Date, to: Date) {
+  return db
+    .select({ recordedAt: journalEntries.recordedAt, text: journalEntries.text })
+    .from(journalEntries)
+    .where(and(gte(journalEntries.recordedAt, from), lte(journalEntries.recordedAt, to)))
+    .orderBy(asc(journalEntries.recordedAt));
 }
 
 // ─── Entries ─────────────────────────────────────────────────────
