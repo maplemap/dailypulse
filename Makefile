@@ -15,6 +15,9 @@ stop: ## Stop all containers
 logs: ## Follow logs
 	docker compose logs -f app
 
+update: ## Pull latest changes and restart in prod mode
+	docker compose down && git pull && docker compose --env-file .env up --build -d
+
 db-generate: ## Generate database migrations
 	npm run db:generate
 
