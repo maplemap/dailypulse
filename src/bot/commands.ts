@@ -1,12 +1,14 @@
 import type { Bot, Context } from 'grammy';
 import { InlineKeyboard, Keyboard } from 'grammy';
 import type { BotContext } from './types.js';
-import { getEntriesByPeriod, getStats } from '../db/repository.js';
+import { getEntriesWithValues, getStats, getEventLogsWithTypes, getEventStats } from '../db/repository.js';
 import { generateAnalysis } from '../ai/analyze.js';
 
 export const mainKeyboard = new Keyboard()
   .text('✏️ Заповнити').text('📊 Статистика').row()
-  .text('🔍 Аналіз').text('📋 Детальний звіт')
+  .text('🔍 Аналіз').text('📋 Детальний звіт').row()
+  .text('⚡ Подія').text('🤒 Симптом').row()
+  .text('⚙️ Заплановані')
   .resized()
   .persistent();
 
@@ -24,9 +26,12 @@ async function runAnalysis(ctx: Context, mode: 'brief' | 'detailed') {
 
   const now = new Date();
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const entries = await getEntriesByPeriod(weekAgo, now);
+  const [rows, eventRows] = await Promise.all([
+    getEntriesWithValues(weekAgo, now),
+    getEventLogsWithTypes(weekAgo, now),
+  ]);
 
-  if (entries.length === 0) {
+  if (rows.length === 0 && eventRows.length === 0) {
     await ctx.reply('Немає записів за останній тиждень.');
     return;
   }
@@ -44,7 +49,7 @@ async function runAnalysis(ctx: Context, mode: 'brief' | 'detailed') {
   await ctx.api.sendChatAction(chatId.toString(), 'typing');
 
   try {
-    const analysis = await generateAnalysis(entries, 'week', mode, controller.signal);
+    const analysis = await generateAnalysis(rows, 'week', mode, controller.signal, eventRows);
     await ctx.api.editMessageText(chatId, msg.message_id, analysis, {
       parse_mode: 'Markdown',
     });
@@ -60,22 +65,44 @@ async function runAnalysis(ctx: Context, mode: 'brief' | 'detailed') {
 async function handleStats(ctx: Context) {
   const now = new Date();
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const stats = await getStats(weekAgo, now);
 
-  if (!stats.avgEnergy) {
+  const [rows, eventRows] = await Promise.all([
+    getStats(weekAgo, now),
+    getEventStats(weekAgo, now),
+  ]);
+
+  if (rows.length === 0 && eventRows.length === 0) {
     await ctx.reply('Немає записів за останній тиждень.');
     return;
   }
 
-  const fmt = (v: unknown) => (v ? Number(v).toFixed(1) : '—');
+  const parts: string[] = ['📊 *Статистика за тиждень*'];
 
-  await ctx.reply(
-    `📊 *Статистика за тиждень*\n\n` +
-      `⚡ Енергія: ${fmt(stats.avgEnergy)}/10\n` +
-      `😊 Настрій: ${fmt(stats.avgMood)}/10\n` +
-      `😰 Тривожність: ${fmt(stats.avgAnxiety)}/10`,
-    { parse_mode: 'Markdown' },
-  );
+  if (rows.length > 0) {
+    const fmt = (v: string | null) => (v ? Number(v).toFixed(1) : '—');
+    parts.push('*Заплановані:*\n' + rows.map((r) => `• ${r.itemName}: ${fmt(r.avg)}/10`).join('\n'));
+  }
+
+  const symptoms = eventRows.filter((r) => r.category === 'symptom');
+  const events = eventRows.filter((r) => r.category === 'event');
+
+  if (symptoms.length > 0) {
+    const total = symptoms.reduce((s, r) => s + Number(r.count), 0);
+    parts.push(
+      `*Симптоми (${total} разів):*\n` +
+        symptoms.map((r) => `• ${r.name} — ${r.count}`).join('\n'),
+    );
+  }
+
+  if (events.length > 0) {
+    const total = events.reduce((s, r) => s + Number(r.count), 0);
+    parts.push(
+      `*Події (${total} разів):*\n` +
+        events.map((r) => `• ${r.name} — ${r.count}`).join('\n'),
+    );
+  }
+
+  await ctx.reply(parts.join('\n\n'), { parse_mode: 'Markdown' });
 }
 
 export function registerCommands(bot: Bot<BotContext>) {
