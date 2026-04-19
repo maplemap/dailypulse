@@ -37,7 +37,7 @@ async function buildItemsListKeyboard(showArchived = false) {
       .text(`${item.name} (${TYPE_LABELS[item.type] ?? item.type}) — ${periods}`, 'noop')
       .row()
       .text('✏️ Редагувати', `item_edit:${item.id}`)
-      .text('📦 Архів', `item_archive_confirm:${item.id}`)
+      .text('👁 Приховати', `item_archive_confirm:${item.id}`)
       .text('🗑️ Видалити', `item_delete_confirm:${item.id}`)
       .row();
   }
@@ -46,12 +46,12 @@ async function buildItemsListKeyboard(showArchived = false) {
 
   if (archived.length > 0) {
     if (showArchived) {
-      keyboard.text('📦 Архівовані ▲', 'items_hide_archived').row();
+      keyboard.text('👁 Приховані ▲', 'items_hide_archived').row();
       for (const item of archived) {
-        keyboard.text(`${item.name} (архів)`, 'noop').row();
+        keyboard.text(`${item.name} (приховано)`, 'noop').row();
       }
     } else {
-      keyboard.text(`📦 Архівовані (${archived.length}) ▼`, 'items_show_archived').row();
+      keyboard.text(`👁 Приховані (${archived.length}) ▼`, 'items_show_archived').row();
     }
   }
 
@@ -264,11 +264,11 @@ export function registerItemsMenu(bot: Bot<BotContext>) {
     if (!item) return;
 
     const confirmKeyboard = new InlineKeyboard()
-      .text('✅ Так, архівувати', `item_archive:${id}`)
+      .text('✅ Так, приховати', `item_archive:${id}`)
       .text('❌ Скасувати', 'items_menu');
 
     await ctx.editMessageText(
-      `📦 Архівувати *${item.name}*?\nАйтем зникне з форми, але всі дані збережуться.`,
+      `👁 Приховати *${item.name}*?\nАйтем зникне з форми, але всі дані збережуться.`,
       { parse_mode: 'Markdown', reply_markup: confirmKeyboard },
     );
   });
