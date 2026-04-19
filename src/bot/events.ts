@@ -134,7 +134,27 @@ async function logFlow(
       continue;
     }
 
-    await conversation.external(() => createEventLog(eventTypeId));
+    const commentKeyboard = new InlineKeyboard()
+      .text('✍️ Коментар', 'addcomment')
+      .text('➡️ Пропустити', 'skipcomment');
+    const commentMsg = await ctx.reply('Додати коментар?', { reply_markup: commentKeyboard });
+
+    const commentCb = await conversation.waitFor('callback_query:data', {
+      otherwise: (c) => { if (c.callbackQuery) c.answerCallbackQuery().catch(() => {}); },
+    });
+    await commentCb.answerCallbackQuery();
+    await ctx.api.editMessageReplyMarkup(ctx.chat!.id, commentMsg.message_id);
+
+    let comment: string | undefined;
+    if (commentCb.callbackQuery.data === 'addcomment') {
+      await ctx.reply('Введи коментар:');
+      const textCtx = await conversation.waitFor('message:text', {
+        otherwise: (c) => { if (c.callbackQuery) c.answerCallbackQuery().catch(() => {}); },
+      });
+      comment = textCtx.message.text.trim() || undefined;
+    }
+
+    await conversation.external(() => createEventLog(eventTypeId, comment));
     await ctx.reply('✅ Записано!');
     return;
   }
