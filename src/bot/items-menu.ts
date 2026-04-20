@@ -7,6 +7,7 @@ import {
   createItem,
   updateItem,
   archiveItem,
+  unarchiveItem,
   deleteItem,
 } from '../db/repository.js';
 
@@ -48,7 +49,7 @@ async function buildItemsListKeyboard(showArchived = false) {
     if (showArchived) {
       keyboard.text('👁 Приховані ▲', 'items_hide_archived').row();
       for (const item of archived) {
-        keyboard.text(`${item.name} (приховано)`, 'noop').row();
+        keyboard.text(`${item.name} (приховано)`, 'noop').text('↩️ Відновити', `item_restore:${item.id}`).row();
       }
     } else {
       keyboard.text(`👁 Приховані (${archived.length}) ▼`, 'items_show_archived').row();
@@ -133,9 +134,9 @@ export async function addItemFlow(
       break;
     }
 
-    if (d === 'toggle_morning') selected.has('morning') ? selected.delete('morning') : selected.add('morning');
-    if (d === 'toggle_afternoon') selected.has('afternoon') ? selected.delete('afternoon') : selected.add('afternoon');
-    if (d === 'toggle_evening') selected.has('evening') ? selected.delete('evening') : selected.add('evening');
+    if (d === 'toggle_morning') { if (selected.has('morning')) selected.delete('morning'); else selected.add('morning'); }
+    if (d === 'toggle_afternoon') { if (selected.has('afternoon')) selected.delete('afternoon'); else selected.add('afternoon'); }
+    if (d === 'toggle_evening') { if (selected.has('evening')) selected.delete('evening'); else selected.add('evening'); }
 
     await ctx.api.editMessageReplyMarkup(ctx.chat!.id, periodsMsg.message_id, {
       reply_markup: buildPeriodsKeyboard(),
@@ -220,9 +221,9 @@ export async function editItemFlow(
         break;
       }
 
-      if (d === 'toggle_morning') selected.has('morning') ? selected.delete('morning') : selected.add('morning');
-      if (d === 'toggle_afternoon') selected.has('afternoon') ? selected.delete('afternoon') : selected.add('afternoon');
-      if (d === 'toggle_evening') selected.has('evening') ? selected.delete('evening') : selected.add('evening');
+      if (d === 'toggle_morning') { if (selected.has('morning')) selected.delete('morning'); else selected.add('morning'); }
+      if (d === 'toggle_afternoon') { if (selected.has('afternoon')) selected.delete('afternoon'); else selected.add('afternoon'); }
+      if (d === 'toggle_evening') { if (selected.has('evening')) selected.delete('evening'); else selected.add('evening'); }
 
       await ctx.api.editMessageReplyMarkup(ctx.chat!.id, periodsMsg.message_id, {
         reply_markup: buildPeriodsKeyboard(),
@@ -302,6 +303,13 @@ export function registerItemsMenu(bot: Bot<BotContext>) {
     const id = parseInt(ctx.match[1]);
     await archiveItem(id);
     await editItemsMenu(ctx);
+  });
+
+  bot.callbackQuery(/^item_restore:(\d+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const id = parseInt(ctx.match[1]);
+    await unarchiveItem(id);
+    await editItemsMenu(ctx, true);
   });
 
   bot.callbackQuery('items_menu', async (ctx) => {

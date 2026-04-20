@@ -53,6 +53,13 @@ export async function archiveItem(id: number): Promise<void> {
     .where(eq(trackingItems.id, id));
 }
 
+export async function unarchiveItem(id: number): Promise<void> {
+  await db
+    .update(trackingItems)
+    .set({ isActive: true, archivedAt: null })
+    .where(eq(trackingItems.id, id));
+}
+
 export async function deleteItem(id: number): Promise<void> {
   await db.delete(entryValues).where(eq(entryValues.itemId, id));
   await db.delete(trackingItems).where(eq(trackingItems.id, id));
