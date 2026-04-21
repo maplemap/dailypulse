@@ -38,7 +38,7 @@ async function buildItemsListKeyboard(showArchived = false) {
       .text(`${item.name} (${TYPE_LABELS[item.type] ?? item.type}) — ${periods}`, 'noop')
       .row()
       .text('✏️ Редагувати', `item_edit:${item.id}`)
-      .text('👁 Приховати', `item_archive_confirm:${item.id}`)
+      .text('👁 Приховати', `item_archive:${item.id}`)
       .text('🗑️ Видалити', `item_delete_confirm:${item.id}`)
       .row();
   }
@@ -255,23 +255,6 @@ export function registerItemsMenu(bot: Bot<BotContext>) {
   bot.callbackQuery(/^item_edit:(\d+)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
     await ctx.conversation.enter('edit_item');
-  });
-
-  bot.callbackQuery(/^item_archive_confirm:(\d+)$/, async (ctx) => {
-    await ctx.answerCallbackQuery();
-    const id = parseInt(ctx.match[1]);
-    const all = await getAllItems();
-    const item = all.find((i) => i.id === id);
-    if (!item) return;
-
-    const confirmKeyboard = new InlineKeyboard()
-      .text('✅ Так, приховати', `item_archive:${id}`)
-      .text('❌ Скасувати', 'items_menu');
-
-    await ctx.editMessageText(
-      `👁 Приховати *${item.name}*?\nАйтем зникне з форми, але всі дані збережуться.`,
-      { parse_mode: 'Markdown', reply_markup: confirmKeyboard },
-    );
   });
 
   bot.callbackQuery(/^item_delete_confirm:(\d+)$/, async (ctx) => {
