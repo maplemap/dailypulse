@@ -2,6 +2,7 @@ import type { Conversation } from '@grammyjs/conversations';
 import { InlineKeyboard } from 'grammy';
 import type { BotContext } from './types.js';
 import { createEntry, createJournalEntry, getActiveItems } from '../db/repository.js';
+import { mainKeyboard } from './commands.js';
 
 type Period = 'morning' | 'afternoon' | 'evening';
 
@@ -97,6 +98,8 @@ export async function fillFlow(
     return;
   }
 
+  await ctx.reply('Починаємо опитування:', { reply_markup: { remove_keyboard: true } });
+
   const values: { itemId: number; value: string }[] = [];
 
   for (const item of items) {
@@ -118,6 +121,7 @@ export async function fillFlow(
   await conversation.external(() => createEntry(period, values));
   await ctx.reply('✅ Записано! Дякую.\n\n_Змінити список показників: /items_', {
     parse_mode: 'Markdown',
+    reply_markup: mainKeyboard,
   });
 }
 

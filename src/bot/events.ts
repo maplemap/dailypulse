@@ -6,6 +6,7 @@ import {
   getAllEventTypes,
   createEventType,
   createEventLog,
+  updateEventLogComment,
   deactivateEventType,
   deleteEventType,
 } from '../db/repository.js';
@@ -134,6 +135,9 @@ async function logFlow(
       continue;
     }
 
+    const logId = await conversation.external(() => createEventLog(eventTypeId));
+    await ctx.reply('✅ Записано!');
+
     const commentKeyboard = new InlineKeyboard()
       .text('✍️ Коментар', 'addcomment')
       .text('➡️ Пропустити', 'skipcomment');
@@ -145,17 +149,15 @@ async function logFlow(
     await commentCb.answerCallbackQuery();
     await ctx.api.editMessageReplyMarkup(ctx.chat!.id, commentMsg.message_id);
 
-    let comment: string | undefined;
     if (commentCb.callbackQuery.data === 'addcomment') {
       await ctx.reply('Введи коментар:');
       const textCtx = await conversation.waitFor('message:text', {
         otherwise: (c) => { if (c.callbackQuery) c.answerCallbackQuery().catch(() => {}); },
       });
-      comment = textCtx.message.text.trim() || undefined;
+      const comment = textCtx.message.text.trim();
+      if (comment) await conversation.external(() => updateEventLogComment(logId, comment));
     }
 
-    await conversation.external(() => createEventLog(eventTypeId, comment));
-    await ctx.reply('✅ Записано!');
     return;
   }
 }
