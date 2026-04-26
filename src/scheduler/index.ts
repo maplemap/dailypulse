@@ -37,8 +37,8 @@ export function startScheduler(bot: Bot<BotContext>) {
     sendReminder(bot, '🌙 Добрий вечір! Підсумуємо день?');
   }, { timezone: TIMEZONE });
 
-  // Weekly AI report — every Sunday at 20:00
-  cron.schedule('0 20 * * 0', async () => {
+  // Weekly AI report — every Sunday at 21:00
+  cron.schedule('0 21 * * 0', async () => {
     console.log('[scheduler] Running weekly AI report...');
     try {
       const now = new Date();
