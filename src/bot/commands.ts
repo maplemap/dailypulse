@@ -126,6 +126,17 @@ async function handleStats(ctx: Context) {
   await ctx.reply(text, { parse_mode: 'Markdown', reply_markup: keyboard });
 }
 
+export async function setMyCommands(bot: Bot<BotContext>) {
+  await bot.api.setMyCommands([
+    { command: 'fill', description: 'Заповнити чек-ін зараз' },
+    { command: 'stats', description: 'Статистика за тиждень' },
+    { command: 'analyze', description: 'Швидкий AI-аналіз за тиждень' },
+    { command: 'report', description: 'Детальний AI-звіт за тиждень' },
+    { command: 'items', description: 'Керування відстежуваними показниками' },
+    { command: 'start', description: 'Запустити бота' },
+  ]);
+}
+
 export function registerCommands(bot: Bot<BotContext>) {
   bot.command('start', async (ctx) => {
     await ctx.reply(

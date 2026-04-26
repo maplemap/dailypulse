@@ -2,7 +2,7 @@ import { Bot, session } from 'grammy';
 import { conversations, createConversation } from '@grammyjs/conversations';
 import { config } from '../config.js';
 import { friendlyError } from './errors.js';
-import { registerCommands, mainKeyboard } from './commands.js';
+import { registerCommands, setMyCommands, mainKeyboard } from './commands.js';
 import { registerItemsMenu, addItemFlow, editItemFlow } from './items-menu.js';
 import { fillFlow, journalFlow } from './flow.js';
 import { logEventFlow, logSymptomFlow } from './events.js';
@@ -40,6 +40,7 @@ export function createBot() {
 
   registerCommands(bot);
   registerItemsMenu(bot);
+  setMyCommands(bot).catch((err) => console.error('setMyCommands failed:', err));
 
   bot.hears('⚡ Подія', (ctx) => ctx.conversation.enter('log_event'));
   bot.hears('🤒 Симптом', (ctx) => ctx.conversation.enter('log_symptom'));
