@@ -133,5 +133,5 @@ export async function journalFlow(
   const msgCtx = await conversation.waitFor('message:text');
   const text = msgCtx.message.text.trim();
   await conversation.external(() => createJournalEntry(text));
-  await ctx.reply('✅ Нотатку збережено.');
+  await ctx.reply('✅ Нотатку збережено.', { reply_markup: mainKeyboard });
 }

@@ -17,6 +17,15 @@ export function createBot() {
     }),
   );
   bot.use(conversations<BotContext, BotContext>());
+
+  const MAIN_KEYBOARD_TEXTS = ['🌡️ Як я зараз', '⚡ Подія', '🤒 Симптом', '📝 Нотатка', '📊 Аналіз'];
+  bot.use(async (ctx, next) => {
+    if (ctx.message?.text && MAIN_KEYBOARD_TEXTS.includes(ctx.message.text)) {
+      await ctx.conversation.exitAll();
+    }
+    await next();
+  });
+
   bot.use(createConversation<BotContext, BotContext>(fillFlow, 'fill'));
   bot.use(createConversation<BotContext, BotContext>(addItemFlow, 'add_item'));
   bot.use(createConversation<BotContext, BotContext>(editItemFlow, 'edit_item'));

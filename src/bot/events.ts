@@ -1,6 +1,7 @@
 import { InlineKeyboard } from 'grammy';
 import type { Conversation } from '@grammyjs/conversations';
 import type { BotContext } from './types.js';
+import { mainKeyboard } from './commands.js';
 import {
   getActiveEventTypes,
   getAllEventTypes,
@@ -156,6 +157,9 @@ async function logFlow(
       });
       const comment = textCtx.message.text.trim();
       if (comment) await conversation.external(() => updateEventLogComment(logId, comment));
+      await ctx.reply('✅ Коментар збережено.', { reply_markup: mainKeyboard });
+    } else {
+      await ctx.reply('Дія записана.', { reply_markup: mainKeyboard });
     }
 
     return;
